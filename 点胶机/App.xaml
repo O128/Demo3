@@ -1,0 +1,49 @@
+<Application x:Class="点胶机.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:点胶机"
+             xmlns:vm="clr-namespace:点胶机.ViewModels"
+             xmlns:vw="clr-namespace:点胶机.Views.Pages"
+             xmlns:conv="clr-namespace:点胶机.Converters">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- MahApps.Metro 主题 -->
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml" />
+                <!-- 主题(深色) -->
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Themes/Dark.Steel.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- 全局转换器 -->
+            <conv:BoolToTextConverter x:Key="BoolToText" TrueText="已回零" FalseText="未回零" />
+            <conv:BoolToColorConverter x:Key="BoolToColor" />
+
+            <!-- ViewModel ↔ View 映射(ContentControl 内容切换) -->
+            <DataTemplate DataType="{x:Type vm:HomeViewModel}">
+                <vw:HomeView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ManualViewModel}">
+                <vw:ManualView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:AutoViewModel}">
+                <vw:AutoView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:RecipeViewModel}">
+                <vw:RecipeView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:AlarmViewModel}">
+                <vw:AlarmView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:LogViewModel}">
+                <vw:LogView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:IoViewModel}">
+                <vw:IoView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SettingViewModel}">
+                <vw:SettingView />
+            </DataTemplate>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
