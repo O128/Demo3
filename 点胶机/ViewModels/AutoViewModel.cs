@@ -21,6 +21,8 @@ public partial class AutoViewModel : ViewModelBase
     [ObservableProperty] private int _todayYield;
     [ObservableProperty] private string _runStatusText = "停止";
     [ObservableProperty] private string _runStatusColor = "#888888";   // 顶端状态条颜色
+    /// <summary>自动运行类按钮是否可用:仅在自动模式时(手动模式禁用自动)</summary>
+    [ObservableProperty] private bool _isAutoRunEnabled = true;
 
     /// <summary>当前流程节点索引(用于高亮,-1 表示未运行/待机)</summary>
     [ObservableProperty] private int _currentNodeIndex = -1;
@@ -58,6 +60,8 @@ public partial class AutoViewModel : ViewModelBase
         StepDesc = _task.StepDesc;
         WorkStep = _task.WorkStep;
         TodayYield = ts.TodayYield;
+        // 自动运行按钮仅在自动模式可用(手动模式禁用自动)
+        IsAutoRunEnabled = ts.WorkMode == WorkMode.Auto;
 
         RunStatusText = ts.RunStatus switch
         {

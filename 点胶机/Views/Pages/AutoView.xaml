@@ -86,10 +86,12 @@
             </DockPanel>
         </Border>
 
-        <!-- ===== 控制按钮 ===== -->
+        <!-- ===== 控制按钮(启动/暂停在手动模式禁用;停止/复位始终可用——安全按钮)===== -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,16">
-            <Button Content="启动" Padding="20,8" Background="#43A047" Foreground="White" Command="{Binding StartCommand}" Margin="0,0,8,0" />
-            <Button Content="暂停" Padding="20,8" Background="#FB8C00" Foreground="White" Command="{Binding PauseCommand}" Margin="0,0,8,0" />
+            <Button Content="启动" Padding="20,8" Background="#43A047" Foreground="White" Command="{Binding StartCommand}" Margin="0,0,8,0"
+                    IsEnabled="{Binding IsAutoRunEnabled}" />
+            <Button Content="暂停" Padding="20,8" Background="#FB8C00" Foreground="White" Command="{Binding PauseCommand}" Margin="0,0,8,0"
+                    IsEnabled="{Binding IsAutoRunEnabled}" />
             <Button Content="停止" Padding="20,8" Background="#E53935" Foreground="White" Command="{Binding StopRunCommand}" Margin="0,0,8,0" />
             <Button Content="复位" Padding="20,8" Command="{Binding ResetCommand}" />
         </StackPanel>

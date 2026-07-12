@@ -9,7 +9,7 @@
                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                  mc:Ignorable="d"
                  TitleCharacterCasing="Normal"
-                 Title="点胶机自动控制系统 V1.0.0" Height="720" Width="1280"
+                 Title="点胶机自动控制系统 V1.0.1" Height="720" Width="1280"
                  MinHeight="600" MinWidth="1024"
                  WindowTitleBrush="{DynamicResource MahApps.Brushes.Accent}"
                    NonActiveWindowTitleBrush="{DynamicResource MahApps.Brushes.Accent}"
@@ -30,16 +30,20 @@
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
                     <iconPacks:PackIconMaterial Kind="RobotIndustrial" Width="22" Height="22" VerticalAlignment="Center" />
                     <TextBlock Text="点胶机自动控制系统" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" Margin="6,0,0,0" />
-                    <TextBlock Text="Dispenser-01 | V1.0.0" FontSize="11" Opacity="0.7" VerticalAlignment="Center" Margin="10,0,0,0" />
+                    <TextBlock Text="Dispenser-01 | V1.0.1" FontSize="11" Opacity="0.7" VerticalAlignment="Center" Margin="10,0,0,0" />
                 </StackPanel>
 
                 <!-- 控制按钮 -->
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                    <!-- 手/自动切换(互斥) -->
+                    <Button Content="手动模式" Margin="3,0" Padding="12,4" Command="{Binding SwitchToManualCommand}" ToolTip="切换到手动模式(自动流程暂停)" />
+                    <Button Content="自动模式" Margin="3,0" Padding="12,4" Command="{Binding SwitchToAutoCommand}" ToolTip="切换到自动模式(续跑或从头开始)" Background="#1565C0" Foreground="White" />
+                    <Rectangle Width="1" Fill="#888" Margin="6,4" />
                     <Button Content="复位" Margin="3,0" Padding="14,4" Command="{Binding ResetCommand}" />
-                    <Button Content="启动" Margin="3,0" Padding="14,4" Background="Green" Command="{Binding StartCommand}" />
-                    <Button Content="暂停" Margin="3,0" Padding="14,4" Command="{Binding PauseCommand}" />
+                    <Button Content="启动" Margin="3,0" Padding="14,4" Background="Green" Command="{Binding StartCommand}" IsEnabled="{Binding IsAutoRunEnabled}" />
+                    <Button Content="暂停" Margin="3,0" Padding="14,4" Command="{Binding PauseCommand}" IsEnabled="{Binding IsAutoRunEnabled}" />
                     <Button Content="停止" Margin="3,0" Padding="14,4" Command="{Binding StopCommand}" />
-                    <Button Content="急停" Margin="6,0,0,0" Padding="14,4" Background="Red" FontWeight="Bold" Command="{Binding EstopCommand}" />
+                    <Button Content="急停" Margin="6,0,0,0" Padding="14,4" Background="{Binding EstopColor}" FontWeight="Bold" Command="{Binding EstopCommand}" />
                 </StackPanel>
 
                 <!-- 机器名/版本(移到中间左侧之后,这里改为空) -->
@@ -72,7 +76,9 @@
                                 <TextBlock Text="主页" Margin="10,0,0,0" VerticalAlignment="Center" />
                             </StackPanel>
                         </ListBoxItem>
-                        <ListBoxItem Padding="14,10">
+                        <ListBoxItem Padding="14,10"
+                                     IsEnabled="{Binding IsManualEnabled}"
+                                     ToolTip="{Binding ManualDisabledReason}">
                             <StackPanel Orientation="Horizontal">
                                 <iconPacks:PackIconMaterial Kind="Cog" Width="20" Height="20" VerticalAlignment="Center" />
                                 <TextBlock Text="手动" Margin="10,0,0,0" VerticalAlignment="Center" />

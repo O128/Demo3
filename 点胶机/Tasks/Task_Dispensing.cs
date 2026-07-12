@@ -126,12 +126,12 @@ public sealed class Task_Dispensing : TaskBase
             case 60:
                 if (_pointIndex >= r.Points.Count)
                 {
-                    _glue.Close();
+                    GlueClose();
                     SetStep(70, "Z 轴上升");
                     break;
                 }
                 var pt = r.Points[_pointIndex];
-                if (pt.GlueOn) _glue.Open(); else _glue.Close();
+                if (pt.GlueOn) GlueOpen(); else GlueClose();
                 _hw.Motion.MoveAbsolute(AxisId.X, pt.X + _offsetX, r.DispenseSpeed);
                 _hw.Motion.MoveAbsolute(AxisId.Y, pt.Y + _offsetY, r.DispenseSpeed);
                 StartWait(15000, $"轨迹点 {_pointIndex + 1} 到位超时");
@@ -143,7 +143,7 @@ public sealed class Task_Dispensing : TaskBase
                     _pointIndex++;
                     if (_pointIndex >= r.Points.Count)
                     {
-                        _glue.Close();
+                        GlueClose();
                         SetStep(70, "Z 轴上升");
                     }
                     else
@@ -252,9 +252,23 @@ public sealed class Task_Dispensing : TaskBase
         TaskStatic.Instance.IsAlarm = true;
     }
 
-    protected override void OnStop()
+    /// <summary>开胶阀并同步写 PLC 输出(IO 联动)</summary>
+    private void GlueOpen()
+    {
+        _glue.Open();
+        _hw.Plc.WriteOutput(IoIndex.Out_GlueValve, true);
+    }
+
+    /// <summary>关胶阀并同步写 PLC 输出(IO 联动)</summary>
+    private void GlueClose()
     {
         _glue.Close();
+        _hw.Plc.WriteOutput(IoIndex.Out_GlueValve, false);
+    }
+
+    protected override void OnStop()
+    {
+        GlueClose();
         foreach (AxisId axis in Enum.GetValues(typeof(AxisId)))
             _hw.Motion.Stop(axis);
         if (WorkStep != 1000)

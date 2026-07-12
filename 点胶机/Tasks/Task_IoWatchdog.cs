@@ -36,8 +36,8 @@ public sealed class Task_IoWatchdog : TaskBase
         var ts = TaskStatic.Instance;
 
         // —— 同步软 PLC 输入到按钮信号 ——
-        // (真实场景按钮接 PLC 输入;UI 按钮也直接写 TaskStatic,两条路径合一)
-        if (plc.ReadInput(IoIndex.In_Estop)) ts.EstopButton = true;
+        // 急停为低电平有效(常态高=true,按下低=false → 触发);其余按钮高电平有效
+        if (!plc.ReadInput(IoIndex.In_Estop)) ts.EstopButton = true;
         if (plc.ReadInput(IoIndex.In_StartButton)) ts.StartButton = true;
         if (plc.ReadInput(IoIndex.In_StopButton)) ts.StopButton = true;
         if (plc.ReadInput(IoIndex.In_PauseButton)) ts.PauseButton = true;

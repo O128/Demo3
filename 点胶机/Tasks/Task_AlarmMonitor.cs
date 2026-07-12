@@ -56,20 +56,70 @@ public sealed class Task_AlarmMonitor : TaskBase
         UpdateLamps();
     }
 
-    /// <summary>根据报警状态联动三色灯和蜂鸣器</summary>
+    /// <summary>闪烁计时(每 ~500ms 翻转一次)</summary>
+    private double _blinkAccumMs;
+    private bool _blinkOn;
+
+    /// <summary>根据设备状态联动三色灯和蜂鸣器
+    /// 规则:急停=红;手动模式=黄;自动运行=绿;自动暂停=闪烁绿;停止=黄绿同亮;
+    ///       蜂鸣器在有报警(停机/暂停级)时闪烁</summary>
     private void UpdateLamps()
     {
+        // 闪烁计时累加(本任务被调度周期约 1ms,但报警时每周期都跑,累加近似)
+        _blinkAccumMs += 5;
+        if (_blinkAccumMs >= 500) { _blinkAccumMs = 0; _blinkOn = !_blinkOn; }
+
+        var ts = TaskStatic.Instance;
         var active = _alarmSvc.GetActiveAlarms();
         bool hasStop = active.Exists(a => a.Level == AlarmLevel.Alarm_Stop);
         bool hasPause = active.Exists(a => a.Level == AlarmLevel.Alarm_Pause);
+        bool hasAnyAlarm = hasStop || hasPause;
 
-        // 红灯:停机报警;黄灯:暂停报警;绿灯:正常运行
-        _plc.WriteOutput(IoIndex.Out_RedLamp, hasStop);
-        _plc.WriteOutput(IoIndex.Out_YellowLamp, hasPause && !hasStop);
-        _plc.WriteOutput(IoIndex.Out_GreenLamp, !hasStop && !hasPause
-            && TaskStatic.Instance.RunStatus == RunStatus.Running);
-        // 蜂鸣:停机/暂停报警时响
-        _plc.WriteOutput(IoIndex.Out_Buzzer, hasStop || hasPause);
+        // 默认熄灭
+        bool red = false, yellow = false, green = false, buzzer = false;
+
+        if (hasStop)
+        {
+            // 停机级报警(含急停、限位、伺服故障)= 红
+            red = true;
+            buzzer = _blinkOn;   // 蜂鸣闪烁
+        }
+        else if (hasPause)
+        {
+            // 暂停级报警(气压等)= 黄 + 蜂鸣闪烁
+            yellow = true;
+            buzzer = _blinkOn;
+        }
+        else
+        {
+            // 无报警:按运行状态
+            switch (ts.RunStatus)
+            {
+                case RunStatus.Running:
+                    green = true;          // 自动运行 = 绿
+                    break;
+                case RunStatus.Paused:
+                    green = _blinkOn;      // 自动暂停 = 闪烁绿
+                    break;
+                case RunStatus.Stopping:
+                    // 停止态:黄绿同亮
+                    yellow = true;
+                    green = true;
+                    break;
+            }
+
+            // 手动模式下:覆盖为黄灯(无论运行状态)
+            if (ts.WorkMode == WorkMode.Manual)
+            {
+                yellow = true;
+                green = false;
+            }
+        }
+
+        _plc.WriteOutput(IoIndex.Out_RedLamp, red);
+        _plc.WriteOutput(IoIndex.Out_YellowLamp, yellow);
+        _plc.WriteOutput(IoIndex.Out_GreenLamp, green);
+        _plc.WriteOutput(IoIndex.Out_Buzzer, buzzer);
     }
 
     protected override void AlwaysRun(WorkMode mode)

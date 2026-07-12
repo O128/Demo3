@@ -29,6 +29,10 @@ public sealed class PlcSimulator : IPlcHardware, IDisposable
     public PlcSimulator(int scanCycleMs = 1)
     {
         _scanCycleMs = Math.Max(1, scanCycleMs);
+        // 急停按钮为常绿(高电平有效表示"正常未按下"),初始未触发=true
+        // 按下急停 → 输入变 false(低电平)→ 检测 !In_Estop 触发报警
+        _db.Inputs[IoIndex.In_Estop] = true;
+        // 启动/停止/暂停/复位 按钮常态为 false(按下=true)
     }
 
     /// <summary>启动扫描线程</summary>
@@ -164,8 +168,8 @@ public sealed class PlcSimulator : IPlcHardware, IDisposable
                 var dt = nowSec - _lastElapsedSec;
                 _lastElapsedSec = nowSec;
 
-                // —— 1) 急停检测(最高优先级)——
-                if (_db.Inputs[IoIndex.In_Estop])
+                // —— 1) 急停检测(低电平有效:按下=false 触发)——
+                if (!_db.Inputs[IoIndex.In_Estop])
                 {
                     _db.AlarmWord[S7DataBlock.AlarmBit.Estop] = true;
                     _db.MainStatus[S7DataBlock.MainStatusBit.AlarmA] = true;

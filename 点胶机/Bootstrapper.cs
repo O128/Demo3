@@ -70,17 +70,37 @@ public class Bootstrapper
             .AddTask(Services.GetRequiredService<Tasks.Task_IoWatchdog>(), false)
             .Start();
 
-        // 6.1 订阅报警事件 → 弹窗(DialogService 订阅 AlarmEvent)
+        // 6.1 订阅报警事件 → Toast(急停报警 id=0 不弹 Toast,因急停是操作员主动行为,不刷屏)
         var dialog = Services.GetRequiredService<IDialogService>();
-        Services.GetRequiredService<IEventBus>().Subscribe<Core.Events.AlarmEvent>(evt =>
+        var eventBus = Services.GetRequiredService<IEventBus>();
+        eventBus.Subscribe<Core.Events.AlarmEvent>(evt =>
         {
-            if (evt.IsActive)
+            if (evt.IsActive && evt.AlarmId != 0)   // 跳过急停(id=0)
                 dialog.ShowAlarm(evt.AlarmId, evt.Name, evt.Level, evt.Message ?? "");
+        });
+        // 订阅 MessageEvent → Toast(手自动切换、按钮操作等业务消息)
+        eventBus.Subscribe<Core.Events.MessageEvent>(evt =>
+        {
+            var ts = Engine.TaskStatic.Instance;
+            var toast = Services.GetRequiredService<Services.Toast.IToastService>();
+            // 含"报警/失败/错误"字样 → 警告;含"切换"→ 讯息;其余讯息
+            if (evt.Message.Contains("报警") || evt.Message.Contains("失败") || evt.Message.Contains("错误"))
+                toast.Warning(evt.Module, evt.Message);
+            else
+                toast.Info(evt.Module, evt.Message);
         });
 
         // 7. 显示 Shell(启动壳)
         var shell = Services.GetRequiredService<MainWindow>();
         shell.Show();
+
+        // 7.1 创建并显示 Toast 通知窗口(右下角非模态)
+        var toastSvc = Services.GetRequiredService<Services.Toast.ToastService>();
+        var toastWin = new Views.Dialogs.ToastWindow(toastSvc);
+        toastWin.Show();
+
+        // 7.2 把 Serilog 日志桥接到 Toast(Info 及以上显示,Debug 不显示)
+        SerilogConfig.AttachMySqlSink(new Logging.SerilogToastSink(toastSvc));
 
         Log.Information("Shell 已显示,系统就绪");
 
@@ -161,7 +181,9 @@ public class Bootstrapper
         services.AddSingleton(sp => new Data.AlarmRepository(sp.GetRequiredService<AppConfig>().Database.ConnectionString));
         services.AddSingleton(sp => new Data.ProductionRepository(sp.GetRequiredService<AppConfig>().Database.ConnectionString));
 
-        // ===== 对话框服务(第6阶段)=====
+        // ===== 对话框服务(第6阶段)+ Toast 通知服务(新)=====
+        services.AddSingleton<Services.Toast.ToastService>();
+        services.AddSingleton<Services.Toast.IToastService>(sp => sp.GetRequiredService<Services.Toast.ToastService>());
         services.AddSingleton<IDialogService, Services.DialogService>();
 
         // ===== 任务调度器 + 业务任务(第4阶段)=====

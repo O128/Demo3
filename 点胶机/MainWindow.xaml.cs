@@ -24,6 +24,14 @@ public partial class MainWindow : MetroWindow
     private void OnNavChanged(object sender, SelectionChangedEventArgs e)
     {
         if (NavList.SelectedIndex < 0) return;
+        // 手动项被禁用时,拦截切换并回退到主页
+        if (NavList.SelectedIndex == 1 && !_viewModel.IsManualEnabled)
+        {
+            NavList.SelectionChanged -= OnNavChanged;   // 暂时取消订阅避免递归
+            NavList.SelectedIndex = 0;
+            NavList.SelectionChanged += OnNavChanged;
+            return;
+        }
         switch (NavList.SelectedIndex)
         {
             case 0: _viewModel.GoHomeCommand.Execute(null); break;

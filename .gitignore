@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# ZCode agent 本地数据(会话计划等,不纳入版本控制)
+.zcode/

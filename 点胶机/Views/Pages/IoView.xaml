@@ -33,38 +33,62 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- 输入 -->
-            <Border Grid.Column="0" Padding="12" CornerRadius="6" Background="{DynamicResource MahApps.Brushes.Control.Background}" Margin="0,0,6,0">
-                <StackPanel>
-                    <TextBlock Text="输入(Input)" FontSize="14" FontWeight="Bold" Margin="0,0,0,8" />
-                    <ItemsControl ItemsSource="{Binding Inputs}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal" Margin="0,4">
-                                    <Ellipse Style="{StaticResource IoLamp}" />
-                                    <TextBlock Text="{Binding Name}" Margin="10,0,0,0" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
+                <!-- 输入(带"模拟置1"按钮) -->
+                <Border Grid.Column="0" Padding="12" CornerRadius="6" Background="{DynamicResource MahApps.Brushes.Control.Background}" Margin="0,0,6,0">
+                <DockPanel LastChildFill="True">
+                    <TextBlock DockPanel.Dock="Top" Text="输入(Input)— 可模拟置1" FontSize="14" FontWeight="Bold" Margin="0,0,0,8" />
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Inputs}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse Grid.Column="0" Style="{StaticResource IoLamp}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                                        <Button Grid.Column="2" Content="置1" Padding="8,2" FontSize="11"
+                                                Command="{Binding SetOnCommand}" Background="#1565C0" Foreground="White" Margin="0,0,4,0" />
+                                        <Button Grid.Column="3" Content="置0" Padding="8,2" FontSize="11"
+                                                Command="{Binding SetOffCommand}" Background="#757575" Foreground="White" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
             </Border>
 
-            <!-- 输出 -->
-            <Border Grid.Column="1" Padding="12" CornerRadius="6" Background="{DynamicResource MahApps.Brushes.Control.Background}" Margin="6,0,0,0">
-                <StackPanel>
-                    <TextBlock Text="输出(Output)" FontSize="14" FontWeight="Bold" Margin="0,0,0,8" />
-                    <ItemsControl ItemsSource="{Binding Outputs}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal" Margin="0,4">
-                                    <Ellipse Style="{StaticResource IoLamp}" />
-                                    <TextBlock Text="{Binding Name}" Margin="10,0,0,0" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
+                <!-- 输出(带"强制置1/清0"按钮) -->
+                <Border Grid.Column="1" Padding="12" CornerRadius="6" Background="{DynamicResource MahApps.Brushes.Control.Background}" Margin="6,0,0,0">
+                <DockPanel LastChildFill="True">
+                    <TextBlock DockPanel.Dock="Top" Text="输出(Output)— 可强制置1/清0" FontSize="14" FontWeight="Bold" Margin="0,0,0,8" />
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Outputs}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse Grid.Column="0" Style="{StaticResource IoLamp}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                                        <Button Grid.Column="2" Content="置1" Padding="8,2" FontSize="11"
+                                                Command="{Binding SetOnCommand}" Background="#43A047" Foreground="White" Margin="0,0,4,0" />
+                                        <Button Grid.Column="3" Content="清0" Padding="8,2" FontSize="11"
+                                                Command="{Binding SetOffCommand}" Background="#757575" Foreground="White" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
             </Border>
         </Grid>
     </Grid>

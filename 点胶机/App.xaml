@@ -18,6 +18,8 @@
             <!-- 全局转换器 -->
             <conv:BoolToTextConverter x:Key="BoolToText" TrueText="已回零" FalseText="未回零" />
             <conv:BoolToColorConverter x:Key="BoolToColor" />
+            <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+            <conv:NotConverter x:Key="NotConverter" />
 
             <!-- ViewModel ↔ View 映射(ContentControl 内容切换) -->
             <DataTemplate DataType="{x:Type vm:HomeViewModel}">

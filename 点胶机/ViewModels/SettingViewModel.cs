@@ -35,7 +35,14 @@ public partial class SettingViewModel : ViewModelBase
     [RelayCommand]
     private void TriggerEstop()
     {
-        // 模拟按下急停按钮(写软 PLC 输入)
+        // 急停为低电平有效:按下=false(触发),绿灯灭
+        _hw.Plc.SetInput(IoIndex.In_Estop, false);
+    }
+
+    [RelayCommand]
+    private void ReleaseEstop()
+    {
+        // 释放急停:恢复 true(绿灯亮)
         _hw.Plc.SetInput(IoIndex.In_Estop, true);
     }
 

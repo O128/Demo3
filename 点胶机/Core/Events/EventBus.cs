@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Threading;
 using 点胶机.Core.Interfaces;
 
@@ -8,7 +9,11 @@ namespace 点胶机.Core.Events;
 /// </summary>
 public sealed class EventBus : IEventBus
 {
-    private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
+    // 必须用 Application.Current.Dispatcher —— 始终是真正的 WPF UI 线程 Dispatcher。
+    // 不能用 Dispatcher.CurrentDispatcher:它会在构造时为"当前线程"取/建 Dispatcher,
+    // 若 EventBus 在非 UI 线程首次构造,会拿到一个无人驱动的 Dispatcher,
+    // 导致 BeginInvoke 投递的事件永不执行(弹窗/状态更新全部失效)。
+    private readonly Dispatcher _dispatcher = Application.Current.Dispatcher;
     private readonly Dictionary<Type, List<Delegate>> _handlers = new();
     private readonly object _lock = new();
 

@@ -14,9 +14,17 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="{Binding Title}" FontSize="22" FontWeight="Bold" Margin="0,0,0,16" />
+        <TextBlock Grid.Row="0" Text="{Binding Title}" FontSize="22" FontWeight="Bold" Margin="0,0,0,8" />
+
+        <!-- 禁用横幅:自动模式/运行中时显示 -->
+        <Border Grid.Row="0" VerticalAlignment="Bottom"
+                Background="#E53935" CornerRadius="4" Padding="12,6" Margin="0,0,0,12"
+                Visibility="{Binding IsDisabled, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="{Binding DisabledReason}" Foreground="White" FontWeight="Bold" />
+        </Border>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+
             <StackPanel>
                 <!-- 当前位置显示 -->
                 <Border Padding="16" CornerRadius="6" Background="{DynamicResource MahApps.Brushes.Control.Background}" Margin="0,0,0,12">
@@ -28,8 +36,9 @@
                     </StackPanel>
                 </Border>
 
-                <!-- 轴选择 + 操作 -->
-                <Border Padding="16" CornerRadius="6" Background="{DynamicResource MahApps.Brushes.Control.Background}" Margin="0,0,0,12">
+                <!-- 轴选择 + 操作(运行类按钮:自动模式/运行中禁用) -->
+                <Border Padding="16" CornerRadius="6" Background="{DynamicResource MahApps.Brushes.Control.Background}" Margin="0,0,0,12"
+                        IsEnabled="{Binding IsDisabled, Converter={StaticResource NotConverter}}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -70,8 +79,9 @@
                     </Grid>
                 </Border>
 
-                <!-- 胶阀测试 -->
-                <Border Padding="16" CornerRadius="6" Background="{DynamicResource MahApps.Brushes.Control.Background}">
+                <!-- 胶阀测试(运行类按钮:自动模式/运行中禁用) -->
+                <Border Padding="16" CornerRadius="6" Background="{DynamicResource MahApps.Brushes.Control.Background}"
+                        IsEnabled="{Binding IsDisabled, Converter={StaticResource NotConverter}}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="点胶阀测试: " VerticalAlignment="Center" />
                         <Button Content="开胶" Padding="14,6" Command="{Binding GlueOpenCommand}" Background="LawnGreen" Margin="8,0" />

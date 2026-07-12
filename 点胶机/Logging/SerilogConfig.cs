@@ -1,23 +1,22 @@
 using System.IO;
 using Serilog;
+using Serilog.Core;
 using Serilog.Events;
 using 点胶机.Core.Config;
 
 namespace 点胶机.Logging;
 
 /// <summary>
-/// Serilog 配置 —— File Sink(按天分文件)
-/// MySQL 落库由 Data 层的自定义 Sink 在第5阶段接入(用 Dapper 写 Logs 表)
+/// Serilog 配置 —— File Sink(按天分文件)+ 可累积挂载多个额外 Sink(MySQL/Toast 等)
 /// </summary>
 public static class SerilogConfig
 {
-    /// <summary>配置的最低日志级别(第5阶段重建 Logger 时复用)</summary>
     public static LogEventLevel MinimumLevel { get; private set; } = LogEventLevel.Debug;
-
-    /// <summary>当前 File Sink 的日志文件路径模板(第5阶段重建 Logger 时复用)</summary>
     public static string FilePath { get; private set; } = "logs/log.txt";
 
-    /// <summary>MySQL 落库 Sink 是否已挂载</summary>
+    /// <summary>已挂载的额外 Sink 列表(累积,重建 Logger 时全部保留)</summary>
+    private static readonly List<ILogEventSink> _extraSinks = new();
+
     public static bool MySqlSinkAttached { get; private set; }
 
     public static void Configure(LoggingSection logging)
@@ -25,8 +24,30 @@ public static class SerilogConfig
         MinimumLevel = ParseLevel(logging.MinLevel);
         FilePath = logging.FilePath;
 
-        // 确保 logs 目录存在
         var dir = Path.GetDirectoryName(logging.FilePath);
+        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            Directory.CreateDirectory(dir);
+
+        RebuildLogger();
+        Log.Information("===== Serilog 已启动(File Sink)=====");
+    }
+
+    /// <summary>挂载一个额外 Sink(MySQL/Toast 等),累积保留所有已挂载的 Sink</summary>
+    public static void AttachSink(ILogEventSink sink, bool isMySql = false)
+    {
+        if (sink is null) return;
+        _extraSinks.Add(sink);
+        if (isMySql) MySqlSinkAttached = true;
+        RebuildLogger();
+        Log.Information("Sink 已挂载(当前共 {N} 个额外 Sink)", _extraSinks.Count);
+    }
+
+    /// <summary>兼容旧接口:挂载 MySQL Sink</summary>
+    public static void AttachMySqlSink(ILogEventSink sink) => AttachSink(sink, isMySql: true);
+
+    private static void RebuildLogger()
+    {
+        var dir = Path.GetDirectoryName(FilePath);
         if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
             Directory.CreateDirectory(dir);
 
@@ -34,38 +55,17 @@ public static class SerilogConfig
             .MinimumLevel.Is(MinimumLevel)
             .Enrich.WithProperty("MachineName", Environment.MachineName)
             .Enrich.FromLogContext()
-            // File Sink:按天分文件,保留 15 天
-            .WriteTo.File(
-                path: logging.FilePath.Replace(".txt", "-.txt"),
-                rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 15,
-                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
-
-        Log.Logger = cfg.CreateLogger();
-        Log.Information("===== Serilog 已启动(File Sink)=====");
-    }
-
-    /// <summary>第5阶段:用 File + MySQL 双 Sink 重建全局 Logger</summary>
-    public static void AttachMySqlSink(Serilog.Core.ILogEventSink mySqlSink)
-    {
-        var dir = Path.GetDirectoryName(FilePath);
-        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-            Directory.CreateDirectory(dir);
-
-        Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Is(MinimumLevel)
-            .Enrich.WithProperty("MachineName", Environment.MachineName)
-            .Enrich.FromLogContext()
             .WriteTo.File(
                 path: FilePath.Replace(".txt", "-.txt"),
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 15,
-                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
-            .WriteTo.Sink(mySqlSink)
-            .CreateLogger();
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
 
-        MySqlSinkAttached = true;
-        Log.Information("MySQL Sink 已挂载,日志同步写入数据库");
+        // 把所有累积的额外 Sink 都加上(File + MySQL + Toast ...)
+        foreach (var s in _extraSinks)
+            cfg = cfg.WriteTo.Sink(s);
+
+        Log.Logger = cfg.CreateLogger();
     }
 
     private static LogEventLevel ParseLevel(string? s) => s?.ToLowerInvariant() switch
