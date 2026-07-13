@@ -54,6 +54,7 @@ public static class SerilogConfig
         var cfg = new LoggerConfiguration()
             .MinimumLevel.Is(MinimumLevel)
             .Enrich.WithProperty("MachineName", Environment.MachineName)
+            .Enrich.With<ModuleEnricher>()           // 自动从 "[模块名]" 前缀提取 Module 属性
             .Enrich.FromLogContext()
             .WriteTo.File(
                 path: FilePath.Replace(".txt", "-.txt"),

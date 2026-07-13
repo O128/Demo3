@@ -63,7 +63,7 @@ public sealed class MySqlLogSink : ILogEventSink, IDisposable
                         """;
                     cmd.Parameters.AddWithValue("@ts", le.Timestamp.LocalDateTime);
                     cmd.Parameters.AddWithValue("@lvl", le.Level.ToString());
-                    cmd.Parameters.AddWithValue("@mod", le.Properties.TryGetValue("Module", out var m) ? m.ToString().Trim('"') : (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@mod", ExtractModule(le));
                     cmd.Parameters.AddWithValue("@msg", le.RenderMessage());
                     cmd.Parameters.AddWithValue("@exc", le.Exception?.ToString() ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@mach", le.Properties.TryGetValue("MachineName", out var mn) ? mn.ToString().Trim('"') : (object)DBNull.Value);
@@ -83,5 +83,28 @@ public sealed class MySqlLogSink : ILogEventSink, IDisposable
         _running = false;
         _flushSignal.Set();
         _writerThread.Join(3000);
+    }
+
+    /// <summary>
+    /// 从日志事件提取模块名(SourceContext 优先 → Module 属性 → 短名截取)。
+    /// 由 ModuleEnricher 统一注入 Module 属性,此处只做兜底解析与短名截取。
+    /// 返回 DBNull 表示无模块信息(供数据库写入 NULL)。
+    /// </summary>
+    internal static object ExtractModule(LogEvent le)
+    {
+        string? raw = null;
+        if (le.Properties.TryGetValue("SourceContext", out var sc))
+            raw = sc.ToString().Trim('"');
+        else if (le.Properties.TryGetValue("Module", out var m))
+            raw = m.ToString().Trim('"');
+
+        if (string.IsNullOrWhiteSpace(raw))
+            return DBNull.Value;
+
+        // 命名空间取最后一段(如 点胶机.Tasks.Task_Dispensing → Task_Dispensing)
+        if (raw.Contains('.'))
+            raw = raw.Substring(raw.LastIndexOf('.') + 1);
+
+        return string.IsNullOrWhiteSpace(raw) ? DBNull.Value : raw;
     }
 }

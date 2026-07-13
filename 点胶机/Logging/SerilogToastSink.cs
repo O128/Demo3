@@ -1,5 +1,6 @@
 using Serilog.Core;
 using Serilog.Events;
+using 点胶机.Data;
 using 点胶机.Services.Toast;
 
 namespace 点胶机.Logging;
@@ -30,16 +31,8 @@ public sealed class SerilogToastSink : ILogEventSink
         // 过滤:[报警触发]/[报警确认] 日志不进 Toast —— 这些由 AlarmEvent→DialogService 单独推送,避免重复
         if (msg.Contains("[报警触发]") || msg.Contains("[报警确认]")) return;
 
-        // 解析模块名(SourceContext 或 Module 属性)
-        string module = "";
-        if (logEvent.Properties.TryGetValue("SourceContext", out var sc))
-            module = sc.ToString().Trim('"');
-        else if (logEvent.Properties.TryGetValue("Module", out var m))
-            module = m.ToString().Trim('"');
-        // 取短名(命名空间最后一段)
-        if (module.Contains('.'))
-            module = module.Substring(module.LastIndexOf('.') + 1);
-        if (string.IsNullOrEmpty(module)) module = "系统";
+        // 解析模块名(复用 MySqlLogSink.ExtractModule,逻辑统一)
+        string module = MySqlLogSink.ExtractModule(logEvent) as string ?? "系统";
 
         if (logEvent.Exception != null)
             msg += $"\n{logEvent.Exception.GetType().Name}: {logEvent.Exception.Message}";
